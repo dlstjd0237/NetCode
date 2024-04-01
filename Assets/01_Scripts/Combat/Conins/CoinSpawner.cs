@@ -15,8 +15,8 @@ public class CoinSpawner : NetworkBehaviour
     [SerializeField] private int _coinValue = 10; // 코인당 10
     [SerializeField] private LayerMask _layerMask; //코인 생성하는 지역에 장애물이 있는지 검사
     [SerializeField] private float _spawnTerm = 30.0f;
-    [SerializeField] private float _spawnRadius = 8.0f;
-    [SerializeField] private List<Transform> _spawnPointList;
+    //[SerializeField] private float _spawnRadius = 8.0f;
+    [SerializeField] private List<SpawnPoint> _spawnPointList;
 
     private bool _isSpawning = false;
     private float _spawnTime = 0;
@@ -95,24 +95,32 @@ public class CoinSpawner : NetworkBehaviour
     {
         _isSpawning = true;
         int pointIndex = Random.Range(0, _spawnPointList.Count);
-        int coinCount = Random.Range(_maxCoins / 2, _maxCoins + 1);
+        SpawnPoint point = _spawnPointList[pointIndex];
+        int maxConCnt = Mathf.Min(_maxCoins, point.SpawnPoints.Count);
+        int coinCount = Random.Range(maxConCnt / 2, maxConCnt + 1);
 
         for (int i = _spawnCountTime; i > 0; --i)
         {
             CountDownClientRpc(i, pointIndex, coinCount);
-            yield return new WaitForSeconds(1.0f);
+            yield return new WaitForSeconds(1);
         }
 
-        Vector2 center = _spawnPointList[pointIndex].position;
 
-        float coinDelay = 3.0f;
+        float coinDelay = 2.0f;
+        List<Vector3> points = point.SpawnPoints;
+
         for (int i = 0; i < coinCount; ++i)
         {
-            Vector2 pos = Random.insideUnitCircle * _spawnRadius + center;
-            ReSpawnCoin coin = _coinPool.Pop();
+            int end = point.SpawnPoints.Count - i - 1;
+            int idx = Random.Range(0, end + 1);
+            Vector3 pos = point.SpawnPoints[idx];
+            (point.SpawnPoints[idx], point.SpawnPoints[end]) = (point.SpawnPoints[end], point.SpawnPoints[idx]);
+
+            var coin = _coinPool.Pop();
             coin.transform.position = pos;
             coin.ResetCoin();
             _activeCoinList.Add(coin);
+
             yield return new WaitForSeconds(coinDelay);
         }
         _isSpawning = false;
@@ -122,11 +130,12 @@ public class CoinSpawner : NetworkBehaviour
     [ClientRpc]
     private void CountDownClientRpc(int sec, int pointIdex, int coinCount)
     {
+        SpawnPoint point = _spawnPointList[pointIdex];
         if (_decalCircle.showDecal == false)
         {
-            _decalCircle.OpenCircle(_spawnPointList[pointIdex].position, _spawnRadius);
+            _decalCircle.OpenCircle(point.Position, point.Radius);
         }
-        Debug.Log($"{pointIdex} 번 지점에서 {sec}초후 {coinCount}개의 코인이 생성됩니다.");
+        Debug.Log($"{point.pointName} 번 지점에서 {sec}초후 {coinCount}개의 코인이 생성됩니다.");
     }
 
     [ClientRpc]
