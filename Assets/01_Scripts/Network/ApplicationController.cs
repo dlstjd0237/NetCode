@@ -28,7 +28,18 @@ public class ApplicationController : MonoBehaviour
             hostSingleton.CreateHost();
 
             ClientSingleton clientSingleton = Instantiate(_clientPrefab, transform);
-            await clientSingleton.CreateClient();
+            bool authenticated = await clientSingleton.CreateClient();
+
+            if (authenticated)
+            {
+                //여기에 어드레서블울 비롯한 에셋들을 로딩하는 코드가 들어가얗고
+                //기타등등 게임 클라이언트 준비작업
+                ClientSingleton.Instance.GameManager.GotoMenueScene();
+            }
+            else
+            {
+                Debug.LogError("UGS Service login failed");
+            }
 
             //로딩이 모두 완료되었으면 메뉴씬으로 이동한다.
             ClientSingleton.Instance.GameManager.GotoMenueScene();

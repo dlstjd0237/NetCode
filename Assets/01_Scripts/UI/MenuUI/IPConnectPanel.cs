@@ -24,10 +24,15 @@ public class IPConnectPanel : MonoBehaviour
         if (NetworkManager.Singleton != null)
             NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnect;
     }
-
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton == null) return;
+            
+        NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnect;
+    }
     private void HandleClientDisconnect(ulong clientID)
     {
-
+        Debug.Log(clientID + ", 오류 발생");
     }
 
     private string FindIPAddress()
@@ -63,7 +68,11 @@ public class IPConnectPanel : MonoBehaviour
 
     private void HandleClientBtnClick()
     {
-
+        if (SettupNetworkPassport() == false) return;
+        if (NetworkManager.Singleton.StartClient() == false)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
     }
 
     private bool SettupNetworkPassport()
