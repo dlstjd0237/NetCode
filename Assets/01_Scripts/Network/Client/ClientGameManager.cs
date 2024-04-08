@@ -14,6 +14,8 @@ using Unity.Networking.Transport.Relay;
 public class ClientGameManager : MonoBehaviour
 {
     private JoinAllocation _allocation;
+    private string _playerName;
+    public string PlayerName => _playerName;
     public async Task<bool> InitAsync()
     {
         //여기에 UGS서비스 인증파트가 들어갈 예정입니다.
@@ -63,5 +65,10 @@ public class ClientGameManager : MonoBehaviour
             NetworkManager.Singleton.Shutdown();
             return false;
         }
+    }
+
+    public void SetPlayerName(string playerName)
+    {
+        _playerName = playerName;
     }
 }

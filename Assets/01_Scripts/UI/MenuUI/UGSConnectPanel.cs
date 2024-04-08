@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class UGSConnectPanel : MonoBehaviour
@@ -9,9 +10,17 @@ public class UGSConnectPanel : MonoBehaviour
     [SerializeField] private Button _relayHostBtn;
     [SerializeField] private Button _enterLobbyBtn;
 
+    public UnityEvent OpenLobbyEvent;
+
     private void Awake()
     {
         _relayHostBtn.onClick.AddListener(HandleRelayHostClick);
+        _enterLobbyBtn.onClick.AddListener(HandleLobbyClick);
+    }
+
+    private void HandleLobbyClick()
+    {
+        OpenLobbyEvent?.Invoke();
     }
 
     private async void HandleRelayHostClick()
