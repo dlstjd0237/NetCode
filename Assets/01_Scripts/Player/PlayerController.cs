@@ -9,6 +9,9 @@ using Unity.Collections;
 
 public class PlayerController : NetworkBehaviour
 {
+    public static event Action<PlayerController> OnPlayerSpawn;
+    public static event Action<PlayerController> OnPlayerDespawn;
+
     [Header("Reference")]
     [SerializeField] private CinemachineVirtualCamera _followCam;
     [SerializeField] private TextMeshPro _nameText;
@@ -20,6 +23,7 @@ public class PlayerController : NetworkBehaviour
 
     public PlayerVisual VisualCompo { get; private set; }
     public PlayerMovement MovementCompo { get; private set; }
+    public Health HealthCompo { get; private set; }
 
     public NetworkVariable<FixedString32Bytes> playerName;
 
@@ -30,6 +34,7 @@ public class PlayerController : NetworkBehaviour
 
         VisualCompo = GetComponent<PlayerVisual>();
         MovementCompo = GetComponent<PlayerMovement>();
+        HealthCompo = GetComponent<Health>();
     }
 
     public override void OnNetworkSpawn()
@@ -48,6 +53,8 @@ public class PlayerController : NetworkBehaviour
             UserData qwer = HostSingleton.Instance.GameManager.NetServer.GetUserDataByClientID(OwnerClientId);
             playerName.Value = qwer.username;
 
+            OnPlayerSpawn?.Invoke(this);
+
         }
         HandleNameChaner(string.Empty, playerName.Value);
     }
@@ -61,6 +68,10 @@ public class PlayerController : NetworkBehaviour
     {
         playerName.OnValueChanged -= HandleNameChaner;
         tankColor.OnValueChanged -= HandleColorChanged;
+        if (IsServer)
+        {
+            OnPlayerDespawn?.Invoke(this);
+        }
     }
 
     private void HandleColorChanged(Color previousValue, Color newValue)

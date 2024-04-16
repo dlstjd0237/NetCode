@@ -43,6 +43,8 @@ public class TankSelectPanel : NetworkBehaviour
         _selectUIList.Add(ui);
         ui.OnDisconnectEvent += HandleDisconnected;
         ui.OnReadyChangeEvent += HandleReadyChanged;
+        HandleReadyChanged(false);
+
     }
     private void HandleDisconnected(TankSelectUI ui)
     {
@@ -57,7 +59,7 @@ public class TankSelectPanel : NetworkBehaviour
 
     }
 
-  
+
 
 
 }
