@@ -8,6 +8,7 @@ public class PlayerMovement : NetworkBehaviour
     [Header("References")]
     [SerializeField] private PlayerInput _playerInput;
     [SerializeField] private Transform _bodyTrm;
+    [SerializeField] private ParticleSystem _dustEffect;
     private Rigidbody2D _rigdbody;
 
     [Header("Setting Values")]
@@ -16,9 +17,16 @@ public class PlayerMovement : NetworkBehaviour
 
     private Vector2 _movementInput;
 
+    [SerializeField] private float _dustEmissionValue = 10;
+    private ParticleSystem.EmissionModule _emissionModule;
+    private Vector3 _prevPos;
+    private float _particleStopThreshold = 0.005f;
+
     private void Awake()
     {
         _rigdbody = GetComponent<Rigidbody2D>();
+        _emissionModule = _dustEffect.emission; //酱快快快快快快快眶
+
 
     }
 
@@ -45,6 +53,18 @@ public class PlayerMovement : NetworkBehaviour
     }
     private void FixedUpdate()
     {
+        float moveDistance = (transform.position - _prevPos).sqrMagnitude;
+        if (moveDistance > _particleStopThreshold)
+        {
+            _emissionModule.rateOverTime = _dustEmissionValue;
+        }
+        else
+        {
+            _emissionModule.rateOverTime = 0;
+        }
+
+        _prevPos = transform.position;
+
         if (!IsOwner) return;
         _rigdbody.velocity = _bodyTrm.up * (_movementInput.y * _movementSpeed);
     }

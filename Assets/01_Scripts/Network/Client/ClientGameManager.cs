@@ -103,6 +103,8 @@ public class ClientGameManager : IDisposable
 
     public void Disconnet()
     {
-        NetClient?.Dispose();
+        NetClient?.Disconnect();
+
+        SceneManager.LoadScene(SceneNames.MenuScene);
     }
 }

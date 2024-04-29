@@ -15,15 +15,18 @@ public class PlayerController : NetworkBehaviour
     [Header("Reference")]
     [SerializeField] private CinemachineVirtualCamera _followCam;
     [SerializeField] private TextMeshPro _nameText;
+    [SerializeField] private SpriteRenderer _minimapIcon;
 
     [Header("Setting Values")]
     [SerializeField] private int _ownerCamPriority = 15;
+    [SerializeField] private Color _ownerColor;
 
     public NetworkVariable<Color> tankColor;
 
     public PlayerVisual VisualCompo { get; private set; }
     public PlayerMovement MovementCompo { get; private set; }
     public Health HealthCompo { get; private set; }
+    public CoinCollector CoinCompo { get; private set; }
 
     public NetworkVariable<FixedString32Bytes> playerName;
 
@@ -35,6 +38,9 @@ public class PlayerController : NetworkBehaviour
         VisualCompo = GetComponent<PlayerVisual>();
         MovementCompo = GetComponent<PlayerMovement>();
         HealthCompo = GetComponent<Health>();
+
+
+        CoinCompo = GetComponent<CoinCollector>();
     }
 
     public override void OnNetworkSpawn()
@@ -44,19 +50,19 @@ public class PlayerController : NetworkBehaviour
 
         if (IsOwner)
         {
+            _minimapIcon.color = _ownerColor;
             _followCam.Priority = _ownerCamPriority;
         }
 
         if (IsServer)
         {
-
             UserData qwer = HostSingleton.Instance.GameManager.NetServer.GetUserDataByClientID(OwnerClientId);
             playerName.Value = qwer.username;
 
-            OnPlayerSpawn?.Invoke(this);
 
         }
         HandleNameChaner(string.Empty, playerName.Value);
+        OnPlayerSpawn?.Invoke(this);
     }
 
     private void HandleNameChaner(FixedString32Bytes previousValue, FixedString32Bytes newValue)
@@ -68,10 +74,9 @@ public class PlayerController : NetworkBehaviour
     {
         playerName.OnValueChanged -= HandleNameChaner;
         tankColor.OnValueChanged -= HandleColorChanged;
-        if (IsServer)
-        {
-            OnPlayerDespawn?.Invoke(this);
-        }
+
+        OnPlayerDespawn?.Invoke(this);
+
     }
 
     private void HandleColorChanged(Color previousValue, Color newValue)
@@ -79,11 +84,14 @@ public class PlayerController : NetworkBehaviour
         VisualCompo.SetTintColor(newValue);
     }
 
+
     #region Only Server execution area
 
-    public void SetTankColor(Color color)
+    public void SetTankData(Color color, int coin)
     {
         tankColor.Value = color;
+        CoinCompo.totalCoin.Value = coin;
+        Debug.Log(tankColor.Value);
     }
 
     #endregion

@@ -9,6 +9,8 @@ public class NetworkServer : IDisposable
 {
     public NetworkManager _networkManager;
 
+    public Action<string> OnClientLeft; //AuthID
+
     //클라이언트 아이디로 Auth 아이디 알아내는 것
     private Dictionary<ulong, string> _clientToAuthDictionary = new Dictionary<ulong, string>();
     private Dictionary<string, UserData> _authToUserDictionary = new Dictionary<string, UserData>();
@@ -35,6 +37,8 @@ public class NetworkServer : IDisposable
         {
             _clientToAuthDictionary.Remove(clientID);
             _authToUserDictionary.Remove(authID);
+
+            OnClientLeft?.Invoke(authID);
         }
     }
 

@@ -13,6 +13,7 @@ public class Health : NetworkBehaviour
     public event Action OnHealthChangedEvent;
 
     private bool _isDead;
+    [SerializeField] private GameObject _explosionParticle;
 
     private void Awake()
     {
@@ -34,6 +35,12 @@ public class Health : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        for (int i = 0; i < 4; ++i)
+        {
+            Vector2 pos = (Vector2)transform.position + UnityEngine.Random.insideUnitCircle;
+            Instantiate(_explosionParticle, pos, Quaternion.identity);
+        }
+
         if (IsClient)
         {
             currentHealth.OnValueChanged -= HandleHealthValueChanged;
@@ -48,6 +55,15 @@ public class Health : NetworkBehaviour
     private void HandleHealthValueChanged(int previousValue, int newValue)
     {
         OnHealthChangedEvent?.Invoke();
+
+        int delta = newValue - previousValue;
+        int value = Mathf.Abs(delta);
+
+        if (value == maxHealth) return;
+
+        Color textColor = delta < 0 ? Color.red : Color.green;
+        TextManager.Instacnce.PopUpText(value.ToString(), transform.position, textColor);
+
     }
 
     //코이츠와 서버만 실행하는 메서드이다.
@@ -65,6 +81,7 @@ public class Health : NetworkBehaviour
 
     public void TakeDamage(int damageValue)
     {
+
         ModifyHealth(-damageValue);
     }
 

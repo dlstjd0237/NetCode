@@ -30,8 +30,8 @@ public class CoinSpawner : NetworkBehaviour
     //이녀석도 서버만 실행하는 코드이다.
     private ReSpawnCoin SpawnCoin()
     {
-        if (IsServer == false) return null;
 
+        if (IsServer == false) return null;
         ReSpawnCoin coin = Instantiate(_coinPrefab, Vector3.zero, Quaternion.identity);
         coin.SetValue(_coinValue);
         coin.GetComponent<NetworkObject>().Spawn(); //네트워크를 통해서 이녀석을 다 스폰한다.
@@ -58,6 +58,8 @@ public class CoinSpawner : NetworkBehaviour
             return;
         }
 
+       
+
         //이걸로 코인 크기 잰다.
         _coinRadius = _coinPrefab.GetComponent<CircleCollider2D>().radius;
 
@@ -78,6 +80,7 @@ public class CoinSpawner : NetworkBehaviour
     {
         if (IsServer == false) return; //서버가 아니면 리턴
 
+        if (GameManager.Instance.GameStarted == false) return;
         //나중에 여기에 게임이 시작되었을 때만 코인이 생성되게 변셩해야 함
 
         if (_isSpawning == false && _activeCoinList.Count == 0)
@@ -135,7 +138,12 @@ public class CoinSpawner : NetworkBehaviour
         {
             _decalCircle.OpenCircle(point.Position, point.Radius);
         }
-        Debug.Log($"{point.pointName} 번 지점에서 {sec}초후 {coinCount}개의 코인이 생성됩니다.");
+
+        if (sec <= 1)
+        {
+            _decalCircle.StopBlinkIcon();
+        }
+        MessageSystem.Instance.ShowText($"{point.pointName}에서 {sec}초후 {coinCount}개의 코인이 생성됩니다", 1);
     }
 
     [ClientRpc]

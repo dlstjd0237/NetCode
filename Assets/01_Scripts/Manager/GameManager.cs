@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,14 +10,60 @@ public class GameManager : NetworkBehaviour
     public static GameManager Instance;
 
     [SerializeField] private PlayerController _playerPrefab;
+    public PlayerController PlayerPrefab => _playerPrefab;
     [SerializeField] private TankSelectUI _selectUIPrefab;
     [SerializeField] private RectTransform _selectPanelTrm;
 
     [SerializeField] private TankSelectPanel _tankSelectPanel;
+
+    private Dictionary<ulong, PlayerController> _playerDictionary;
+    private bool _isGameStart = false;
+    public bool GameStarted => _isGameStart;
     private void Awake()
     {
         Instance = this;
         _selectPanelTrm.parent.GetComponent<TankSelectPanel>();
+        _playerDictionary = new Dictionary<ulong, PlayerController>();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsClient)
+        {
+            PlayerController.OnPlayerSpawn += HandlePlayerSpawn;
+            PlayerController.OnPlayerDespawn += HandlePlayerDeSpawn;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsClient)
+        {
+            PlayerController.OnPlayerSpawn -= HandlePlayerSpawn;
+            PlayerController.OnPlayerDespawn -= HandlePlayerDeSpawn;
+        }
+    }
+
+    private void HandlePlayerSpawn(PlayerController controller)
+    {
+        _playerDictionary.Add(controller.OwnerClientId, controller);
+    }
+
+    private void HandlePlayerDeSpawn(PlayerController controller)
+    {
+        if (_playerDictionary.ContainsKey(controller.OwnerClientId))
+        {
+            _playerDictionary.Remove(controller.OwnerClientId);
+        }
+    }
+
+    public PlayerController GetPlayerByClientID(ulong clientID)
+    {
+        if (_playerDictionary.TryGetValue(clientID, out PlayerController controller))
+        {
+            return controller;
+        }
+        return null;
     }
 
 
@@ -38,21 +85,29 @@ public class GameManager : NetworkBehaviour
         {
             ulong clientID = ui.OwnerClientId;//이걸 소유하고 있는 유저의 clientID
             Color color = ui.selectedColor.Value;
-            SpawnTank(clientID, color);
+            SpawnTank(clientID, color, 0);
         }
+        _isGameStart = true;
     }
 
-    public async void SpawnTank(ulong clientID, Color color, float delay = 0)
+
+
+    public void SpawnTank(ulong clientID, Color color, int coin, float delay = 0)
     {
-        if (delay > 0)
-        {
-            await Task.Delay(Mathf.CeilToInt(delay * 1000));
-        }
+        StartCoroutine(DelayedSpawn(clientID, color, coin, delay));
+    }
+
+
+    private IEnumerator DelayedSpawn(ulong clientID, Color color, int coin, float delay = 0)
+    {
+        yield return new WaitForSeconds(delay);
 
         Vector3 position = TankSpawnPoint.GetRandomSpawnPos();
 
         PlayerController tank = Instantiate(_playerPrefab, position, Quaternion.identity);
         tank.NetworkObject.SpawnAsPlayerObject(clientID);
-        tank.SetTankColor(color);
+        tank.SetTankData(color, coin);
     }
+
+
 }

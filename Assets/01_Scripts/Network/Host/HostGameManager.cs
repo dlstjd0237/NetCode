@@ -89,11 +89,28 @@ public class HostGameManager : IDisposable
 
         ClientSingleton.Instance.GameManager.SetPayloadData();
 
+        NetServer.OnClientLeft += HandleClientLeft;
+
         if (NetworkManager.Singleton.StartHost())
         {
             NetworkManager.Singleton.SceneManager.LoadScene(SceneNames.GameScene, UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
     }
+
+    private async void HandleClientLeft(string authID)
+    {
+        if (_lobbyId == null) return;
+
+        try
+        {
+            await LobbyService.Instance.RemovePlayerAsync(_lobbyId, authID);
+        }
+        catch (LobbyServiceException ex)
+        {
+            Debug.LogError(ex);
+        }
+    }
+
 
     private IEnumerator HeartBeatLobby(float waitTime)
     {
@@ -129,9 +146,10 @@ public class HostGameManager : IDisposable
         Shutdown();
     }
 
-    private async void Shutdown()
+    public async void Shutdown()
     {
-        HostSingleton.Instance.StopAllCoroutines(); //바트비트 꺼버리고
+        if (HostSingleton.Instance != null)
+            HostSingleton.Instance.StopAllCoroutines(); //하트비트 꺼버리고
 
         if (!string.IsNullOrEmpty(_lobbyId))
         {
@@ -144,7 +162,7 @@ public class HostGameManager : IDisposable
                 Debug.LogError(ex);
             }
         }
-
+        NetServer.OnClientLeft -= HandleClientLeft;
         _lobbyId = string.Empty;
         NetServer?.Dispose();
     }

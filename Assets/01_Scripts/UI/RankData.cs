@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -11,6 +12,9 @@ public class RankData : MonoBehaviour
 
     public RectTransform Rect { get; private set; }
     private string _playerName;
+
+    private PlayerController _targetPlayer;
+    private Color _textColor = Color.white;
 
     public ulong clientID { get; private set; }
     public int Coins { get; private set; }
@@ -32,21 +36,51 @@ public class RankData : MonoBehaviour
         _playerName = state.playerName.Value;
         clientID = state.clientID;
 
+        LoadTankDataAsync();
+
         UpdateCoin(0);
     }
 
-    private void UpdateCoin(int v)
+    private async void LoadTankDataAsync()
     {
-        Coins = v;
+        while (_targetPlayer == null)
+        {
+            await Task.Delay(100);
+            _targetPlayer = GameManager.Instance.GetPlayerByClientID(clientID);
+
+        }
+        _targetPlayer.tankColor.OnValueChanged += HandleColorChange;
+        HandleColorChange(_textColor, _targetPlayer.tankColor.Value);
+
+    }
+
+    private void OnDestroy()
+    {
+        if (_targetPlayer != null)
+        {
+            _targetPlayer.tankColor.OnValueChanged -= HandleColorChange;
+        }
+    }
+
+    private void HandleColorChange(Color previousValue, Color newValue)
+    {
+        _textColor = newValue;
         UpdateText();
     }
 
-    private void UpdateText()
+
+
+    public void UpdateCoin(int coins)
     {
-        if (clientID == NetworkManager.Singleton.LocalClientId)
-        {
-            _tmpTextName.color = new Color(0.8f, 0.2f, 0.2f);
-        }
+        Coins = coins;
+        UpdateText();
+    }
+
+    public void UpdateText()
+    {
+
+        _tmpTextName.color = _textColor;
+
         Text = $"{rank}, {_playerName}-{Coins}";
     }
 
