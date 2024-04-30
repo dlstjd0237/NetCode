@@ -23,6 +23,7 @@ public class MapManager : MonoBehaviour
     }
     [SerializeField] private Tilemap _tilemap;
     [SerializeField] private LayerMask _whatIsObstacle;
+    [SerializeField] private Tilemap _safetyTilemap;
 
     public List<Vector3> GetAvailabePositionList(Vector3 center, float radius)
     {
@@ -49,6 +50,15 @@ public class MapManager : MonoBehaviour
             }
         }
         return pointList;
+    }
+
+
+    public bool IsInSafetyZone(Vector3 worldPos)
+    {
+        Vector3Int tilePos = _safetyTilemap.WorldToCell(worldPos);
+        TileBase tile = _safetyTilemap.GetTile(tilePos);
+
+        return tile != null;
     }
 }
 

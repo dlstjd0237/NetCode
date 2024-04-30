@@ -70,6 +70,7 @@ public class Health : NetworkBehaviour
     private void ModifyHealth(int value)
     {
         if (_isDead) return;
+
         currentHealth.Value = Mathf.Clamp(currentHealth.Value + value, 0, maxHealth);
         if (currentHealth.Value == 0)
         {
@@ -78,10 +79,22 @@ public class Health : NetworkBehaviour
         }
 
     }
+    [ClientRpc]
+    public void ShowTextClientRpc(string text, Color color)
+    {
+
+        TextManager.Instacnce.PopUpText(text, transform.position, color);
+        return;
+
+    }
 
     public void TakeDamage(int damageValue)
     {
-
+        if (MapManager.Instance.IsInSafetyZone(transform.position))
+        {
+            ShowTextClientRpc("¹«Àû", Color.white);
+            return;
+        }
         ModifyHealth(-damageValue);
     }
 
@@ -89,4 +102,7 @@ public class Health : NetworkBehaviour
     {
         ModifyHealth(healValue);
     }
+
+
+
 }

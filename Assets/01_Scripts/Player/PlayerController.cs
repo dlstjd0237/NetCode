@@ -30,6 +30,9 @@ public class PlayerController : NetworkBehaviour
 
     public NetworkVariable<FixedString32Bytes> playerName;
 
+    public ShopNPC shopNpc;
+    private PlayerInput _playerInput;
+
     private void Awake()
     {
         tankColor = new NetworkVariable<Color>();
@@ -41,6 +44,8 @@ public class PlayerController : NetworkBehaviour
 
 
         CoinCompo = GetComponent<CoinCollector>();
+        _playerInput = GetComponent<PlayerInput>();
+
     }
 
     public override void OnNetworkSpawn()
@@ -52,6 +57,7 @@ public class PlayerController : NetworkBehaviour
         {
             _minimapIcon.color = _ownerColor;
             _followCam.Priority = _ownerCamPriority;
+            _playerInput.OnShopKeyEvent += HandleShopKeyEvent;
         }
 
         if (IsServer)
@@ -75,9 +81,19 @@ public class PlayerController : NetworkBehaviour
         playerName.OnValueChanged -= HandleNameChaner;
         tankColor.OnValueChanged -= HandleColorChanged;
 
+        if (IsOwner)
+            _playerInput.OnShopKeyEvent -= HandleShopKeyEvent;
         OnPlayerDespawn?.Invoke(this);
 
     }
+    private void HandleShopKeyEvent()
+    {
+        if (shopNpc == null) return; //가게에 있을 때만 수행한다.
+
+        shopNpc.OpenShop(this);
+        //뭔가 할거임
+    }
+
 
     private void HandleColorChanged(Color previousValue, Color newValue)
     {
