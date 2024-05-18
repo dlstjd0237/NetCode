@@ -5,6 +5,7 @@ using Unity.Netcode;
 using UnityEngine.UI;
 using System;
 using DG.Tweening;
+using System.Linq;
 
 public class ShopWindowUI : NetworkBehaviour
 {
@@ -19,6 +20,8 @@ public class ShopWindowUI : NetworkBehaviour
     {
         _canvasGroup = GetComponent<CanvasGroup>();
         _closeBtn.onClick.AddListener(() => ActiveWindow(false));
+
+        GetComponentsInChildren<UpgradeShopItem>().ToList().ForEach(shop => shop.Initialize(this));
     }
 
     public void ActiveWindow(bool value)

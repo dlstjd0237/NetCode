@@ -21,12 +21,15 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private int _ownerCamPriority = 15;
     [SerializeField] private Color _ownerColor;
 
+
     public NetworkVariable<Color> tankColor;
 
     public PlayerVisual VisualCompo { get; private set; }
     public PlayerMovement MovementCompo { get; private set; }
     public Health HealthCompo { get; private set; }
     public CoinCollector CoinCompo { get; private set; }
+    public ProjectileLauncher LauncherCompo { get; private set; }
+
 
     public NetworkVariable<FixedString32Bytes> playerName;
 
@@ -46,6 +49,7 @@ public class PlayerController : NetworkBehaviour
         CoinCompo = GetComponent<CoinCollector>();
         _playerInput = GetComponent<PlayerInput>();
 
+        LauncherCompo = GetComponent<ProjectileLauncher>();
     }
 
     public override void OnNetworkSpawn()
@@ -111,4 +115,16 @@ public class PlayerController : NetworkBehaviour
     }
 
     #endregion
+
+    [ClientRpc]
+    public void AddDamageToLauncherClientRpc(int upgradeValue)
+    {
+        LauncherCompo.damage += upgradeValue;
+    }
+
+    [ClientRpc]
+    public void AddHPToPlayerClientRpc(int value)
+    {
+        HealthCompo.maxHealth += value;
+    }
 }
